@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#0a0a0a"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="FitTracker"/>
+<title>FitTracker</title>
+<link rel="manifest" href="#" id="manifest-link"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+:root {
+  --bg: #0a0a0a;
+  --bg2: #111111;
+  --bg3: #1a1a1a;
+  --border: #2a2a2a;
+  --border2: #333;
+  --text: #f0f0f0;
+  --text2: #888;
+  --text3: #555;
+  --accent: #c8ff00;
+  --accent2: #a8d900;
+  --red: #ff4444;
+  --blue: #4488ff;
+  --emerald: #00d4a0;
+  --orange: #ff8800;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { background: var(--bg); }
+body {
+  font-family: 'Barlow', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+/* ── Layout ── */
+#app { display: flex; flex-direction: column; min-height: 100dvh; }
+#page { flex: 1; overflow-y: auto; padding: 16px 16px calc(72px + var(--safe-bottom)) 16px; }
+
+/* ── Bottom Nav ── */
+#nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(10,10,10,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: var(--safe-bottom);
+  z-index: 100;
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: 3px; padding: 10px 4px 8px;
+  background: none; border: none; color: var(--text3);
+  font-family: 'Barlow', sans-serif; font-size: 10px; font-weight: 600;
+  letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer;
+  transition: color 0.15s;
+}
+.nav-btn.active { color: var(--accent); }
+.nav-btn svg { width: 22px; height: 22px; }
+
+/* ── Cards ── */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.card-pad { padding: 16px; }
+
+/* ── Typography ── */
+.page-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 32px; font-weight: 900; letter-spacing: -0.5px;
+  line-height: 1; margin-bottom: 4px;
+}
+.page-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; }
+.section-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 10px;
+}
+
+/* ── Inputs ── */
+input, select, textarea {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  color: var(--text); font-family: 'Barlow', sans-serif;
+  font-size: 15px; width: 100%; outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none; appearance: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+textarea { resize: vertical; }
+label { font-size: 12px; font-weight: 600; color: var(--text2); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; }
+.form-group { margin-bottom: 14px; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 11px 18px; border-radius: var(--radius-sm);
+  font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 700;
+  border: none; cursor: pointer; transition: all 0.15s; letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #000; }
+.btn-primary:active { background: var(--accent2); }
+.btn-ghost { background: var(--bg3); color: var(--text2); border: 1px solid var(--border2); }
+.btn-ghost:active { background: var(--border2); }
+.btn-danger { background: rgba(255,68,68,0.1); color: var(--red); border: 1px solid rgba(255,68,68,0.2); }
+.btn-full { width: 100%; justify-content: center; padding: 14px; font-size: 15px; }
+.btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.btn-icon {
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm);
+  cursor: pointer; color: var(--text2); transition: all 0.15s; flex-shrink: 0;
+}
+.btn-icon:active { background: var(--border2); }
+
+/* ── Modal ── */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  z-index: 200; display: flex; align-items: flex-end;
+  justify-content: center; padding: 0;
+}
+.overlay.hidden { display: none; }
+.modal {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 20px 20px 0 0; width: 100%; max-width: 500px;
+  max-height: 90dvh; overflow-y: auto;
+  padding: 20px 16px calc(20px + var(--safe-bottom));
+  animation: slideUp 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.modal-handle {
+  width: 36px; height: 4px; background: var(--border2);
+  border-radius: 99px; margin: 0 auto 16px;
+}
+.modal-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px; font-weight: 800; margin-bottom: 16px;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ── Stat cards ── */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.stat-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+}
+.stat-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 36px; font-weight: 900; line-height: 1; color: var(--text);
+}
+.stat-label { font-size: 11px; color: var(--text3); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; }
+.stat-icon { font-size: 20px; margin-bottom: 6px; }
+
+/* ── Workout list ── */
+.workout-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s; text-decoration: none; color: inherit;
+}
+.workout-item:last-child { border-bottom: none; }
+.workout-item:active { background: var(--bg3); }
+.workout-dot {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: rgba(200,255,0,0.1); display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.workout-name { font-weight: 700; font-size: 15px; }
+.workout-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.workout-vol { text-align: right; }
+.workout-vol-num { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 14px; }
+.workout-vol-label { font-size: 11px; color: var(--text3); }
+
+/* ── Exercise chips ── */
+.cat-chip {
+  display: inline-block; padding: 3px 8px; border-radius: 99px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.cat-Prsia     { background: rgba(68,136,255,0.15); color: #4488ff; }
+.cat-Chrbát    { background: rgba(0,212,160,0.15); color: #00d4a0; }
+.cat-Nohy      { background: rgba(255,136,0,0.15); color: #ff8800; }
+.cat-Ramená    { background: rgba(160,68,255,0.15); color: #a044ff; }
+.cat-Bicepsy   { background: rgba(255,68,180,0.15); color: #ff44b4; }
+.cat-Tricepsy  { background: rgba(0,200,255,0.15); color: #00c8ff; }
+.cat-Brucho    { background: rgba(255,220,0,0.15); color: #ffdc00; }
+.cat-Vlastné   { background: rgba(200,255,0,0.15); color: #c8ff00; }
+.cat-Ostatné   { background: rgba(150,150,150,0.15); color: #999; }
+
+/* ── PR badge ── */
+.pr-badge {
+  display: inline-block; background: var(--accent); color: #000;
+  font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 99px;
+  letter-spacing: 0.5px; vertical-align: middle;
+}
+
+/* ── Set rows ── */
+.set-row {
+  display: grid; grid-template-columns: 28px 1fr 1fr 1fr 36px;
+  gap: 8px; align-items: center; padding: 10px 14px;
+  background: var(--bg3); border-radius: var(--radius-sm); margin-bottom: 6px;
+}
+.set-num { font-size: 12px; color: var(--text3); font-weight: 700; text-align: center; }
+.set-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; text-align: center; }
+.set-1rm { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; text-align: center; }
+
+/* ── NumInput ── */
+.num-input-wrap { display: flex; align-items: center; gap: 6px; }
+.num-btn {
+  width: 40px; height: 40px; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); color: var(--text); font-size: 20px; font-weight: 300;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; user-select: none; -webkit-user-select: none;
+}
+.num-btn:active { background: var(--border2); }
+.num-input-field {
+  flex: 1; text-align: center; font-family: 'JetBrains Mono', monospace;
+  font-size: 20px; font-weight: 600; min-width: 0;
+}
+
+/* ── Chart container ── */
+.chart-wrap { position: relative; height: 160px; margin-top: 8px; }
+.chart-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
+.chart-tab {
+  padding: 6px 12px; border-radius: 99px; font-size: 12px; font-weight: 700;
+  background: var(--bg3); border: 1px solid var(--border2); color: var(--text2);
+  cursor: pointer; transition: all 0.15s;
+}
+.chart-tab.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+/* ── Search ── */
+.search-wrap { position: relative; margin-bottom: 12px; }
+.search-wrap input { padding-left: 40px; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); width: 18px; height: 18px; }
+
+/* ── Exercise picker list ── */
+.ex-pick-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-bottom: 1px solid var(--border);
+  cursor: pointer; transition: background 0.1s;
+}
+.ex-pick-item:last-child { border-bottom: none; }
+.ex-pick-item:active { background: var(--bg3); }
+.ex-name { font-weight: 600; font-size: 14px; }
+.ex-muscle { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+/* ── Empty state ── */
+.empty { display: flex; flex-direction: column; align-items: center; padding: 48px 16px; text-align: center; gap: 8px; }
+.empty-icon { font-size: 48px; }
+.empty-title { font-weight: 700; font-size: 16px; color: var(--text2); }
+.empty-sub { font-size: 13px; color: var(--text3); max-width: 220px; }
+
+/* ── Exercise detail in workout ── */
+.we-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+.we-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.we-body { padding: 14px 16px; }
+.we-title { font-weight: 800; font-size: 16px; }
+.we-meta { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+
+/* ── 1RM preview box ── */
+.orm-box {
+  background: rgba(200,255,0,0.07); border: 1px solid rgba(200,255,0,0.2);
+  border-radius: var(--radius-sm); padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 12px 0;
+}
+.orm-label { font-size: 13px; color: var(--text2); }
+.orm-val { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; font-weight: 900; color: var(--accent); }
+
+/* ── PR row in dashboard ── */
+.pr-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.pr-row:last-child { border-bottom: none; }
+.pr-exercise { font-weight: 700; font-size: 14px; }
+.pr-weight { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 900; color: var(--accent); }
+
+/* ── Month group ── */
+.month-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text3);
+  padding: 8px 0 8px; margin-top: 8px;
+}
+
+/* ── Back button row ── */
+.top-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.back-btn {
+  width: 38px; height: 38px; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+  color: var(--text2); cursor: pointer; flex-shrink: 0;
+}
+.back-btn:active { background: var(--border2); }
+
+/* ── Toast ── */
+#toast {
+  position: fixed; bottom: calc(72px + 16px + var(--safe-bottom)); left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius-sm); padding: 10px 18px;
+  font-size: 13px; font-weight: 600; color: var(--text);
+  z-index: 300; opacity: 0; transition: all 0.3s; white-space: nowrap;
+  pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="page"></div>
+  <nav id="nav">
+    <button class="nav-btn active" onclick="navigate('dashboard')" id="nav-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-btn" onclick="navigate('workouts')" id="nav-workouts">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11M6.5 17.5h11M4 12h16M2 9l2 3-2 3M22 9l-2 3 2 3"/></svg>
+      Tréningy
+    </button>
+    <button class="nav-btn" onclick="navigate('progress')" id="nav-progress">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Progres
+    </button>
+    <button class="nav-btn" onclick="navigate('exercises')" id="nav-exercises">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      Cviky
+    </button>
+  </nav>
+</div>
+
+<div class="overlay hidden" id="overlay" onclick="closeModal()">
+  <div class="modal" id="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+// DATA LAYER — localStorage
+// ════════════════════════════════════════════════════
+const DB = {
+  get(key, def) { try { return JSON.parse(localStorage.getItem('ft_'+key)) ?? def; } catch { return def; } },
+  set(key, val) { localStorage.setItem('ft_'+key, JSON.stringify(val)); },
+};
+
+function getWorkouts()  { return DB.get('workouts', []); }
+function saveWorkouts(w){ DB.set('workouts', w); }
+function getExercises() {
+  const custom = DB.get('custom_exercises', []);
+  return [...DEFAULT_EXERCISES, ...custom];
+}
+function getCustomExercises() { return DB.get('custom_exercises', []); }
+function saveExercises(list) {
+  const defaultIds = new Set(DEFAULT_EXERCISES.map(e=>e.id));
+  DB.set('custom_exercises', list.filter(e=>!defaultIds.has(e.id)));
+}
+
+// ════════════════════════════════════════════════════
+// DEFAULT EXERCISES
+// ════════════════════════════════════════════════════
+const DEFAULT_EXERCISES = [
+  {id:'e1', name:'Bench Press', cat:'Prsia', muscle:'Pectoralis major'},
+  {id:'e2', name:'Šikmý bench press', cat:'Prsia', muscle:'Pectoralis major (horná)'},
+  {id:'e3', name:'Kliky', cat:'Prsia', muscle:'Pectoralis major'},
+  {id:'e4', name:'Peck Deck', cat:'Prsia', muscle:'Pectoralis major'},
+  {id:'e5', name:'Mŕtvy ťah', cat:'Chrbát', muscle:'Erector spinae, Hamstrings'},
+  {id:'e6', name:'Príťahy na kladke', cat:'Chrbát', muscle:'Latissimus dorsi'},
+  {id:'e7', name:'Veslice s činkou', cat:'Chrbát', muscle:'Latissimus dorsi'},
+  {id:'e8', name:'Zhyby nadhmatom', cat:'Chrbát', muscle:'Latissimus dorsi'},
+  {id:'e9', name:'Zhyby podhmatom', cat:'Chrbát', muscle:'Biceps, Latissimus dorsi'},
+  {id:'e10', name:'Drep', cat:'Nohy', muscle:'Quadriceps, Glutes'},
+  {id:'e11', name:'Rumunský mŕtvy ťah', cat:'Nohy', muscle:'Hamstrings, Glutes'},
+  {id:'e12', name:'Leg Press', cat:'Nohy', muscle:'Quadriceps'},
+  {id:'e13', name:'Výpony na lýtka', cat:'Nohy', muscle:'Gastrocnemius'},
+  {id:'e14', name:'Leg Curl', cat:'Nohy', muscle:'Hamstrings'},
+  {id:'e15', name:'Leg Extension', cat:'Nohy', muscle:'Quadriceps'},
+  {id:'e16', name:'Výpady', cat:'Nohy', muscle:'Quadriceps, Glutes'},
+  {id:'e17', name:'Vojenský tlak', cat:'Ramená', muscle:'Deltoids'},
+  {id:'e18', name:'Arnold press', cat:'Ramená', muscle:'Deltoids'},
+  {id:'e19', name:'Bočné rozpaže', cat:'Ramená', muscle:'Deltoids (lateral)'},
+  {id:'e20', name:'Predné rozpaže', cat:'Ramená', muscle:'Deltoids (anterior)'},
+  {id:'e21', name:'Bicepsový zdvih', cat:'Bicepsy', muscle:'Biceps brachii'},
+  {id:'e22', name:'Kladivový zdvih', cat:'Bicepsy', muscle:'Brachialis'},
+  {id:'e23', name:'Sústredný zdvih', cat:'Bicepsy', muscle:'Biceps brachii'},
+  {id:'e24', name:'Tricepsový tlak na kladke', cat:'Tricepsy', muscle:'Triceps brachii'},
+  {id:'e25', name:'Francúzsky tlak', cat:'Tricepsy', muscle:'Triceps brachii'},
+  {id:'e26', name:'Dipy', cat:'Tricepsy', muscle:'Triceps brachii'},
+  {id:'e27', name:'Sedy-ľahy', cat:'Brucho', muscle:'Rectus abdominis'},
+  {id:'e28', name:'Plank', cat:'Brucho', muscle:'Core'},
+  {id:'e29', name:'Zdvihy nôh', cat:'Brucho', muscle:'Rectus abdominis (dolná)'},
+  {id:'e30', name:'Ruskí krútiví', cat:'Brucho', muscle:'Obliques'},
+];
+
+// ════════════════════════════════════════════════════
+// UTILITIES
+// ════════════════════════════════════════════════════
+const uid = () => Math.random().toString(36).slice(2,10);
+const calc1RM = (w,r) => r===1 ? w : Math.round(w*(1+r/30));
+const fmtW = kg => kg % 1 === 0 ? kg+' kg' : kg.toFixed(1)+' kg';
+const fmtVol = v => v >= 1000 ? (v/1000).toFixed(1)+'t' : Math.round(v)+' kg';
+
+function fmtDate(str) {
+  const d = new Date(str+'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const yest = new Date(today); yest.setDate(yest.getDate()-1);
+  if (d.getTime()===today.getTime()) return 'Dnes';
+  if (d.getTime()===yest.getTime()) return 'Včera';
+  const months = ['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'];
+  return d.getDate()+'. '+months[d.getMonth()]+' '+d.getFullYear();
+}
+function fmtDateShort(str) {
+  const d = new Date(str+'T00:00:00');
+  return d.getDate()+'.'+(d.getMonth()+1)+'.';
+}
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function monthLabel(key) {
+  const [y,m] = key.split('-');
+  const months = ['Január','Február','Marec','Apríl','Máj','Jún','Júl','August','September','Október','November','December'];
+  return months[+m-1]+' '+y;
+}
+function catClass(cat) {
+  const map = {'Prsia':'cat-Prsia','Chrbát':'cat-Chrbát','Nohy':'cat-Nohy','Ramená':'cat-Ramená','Bicepsy':'cat-Bicepsy','Tricepsy':'cat-Tricepsy','Brucho':'cat-Brucho','Vlastné':'cat-Vlastné'};
+  return map[cat]||'cat-Ostatné';
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// ════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════
+let currentPage = 'dashboard';
+let currentWorkoutId = null;
+let currentExerciseId = null;
+let chartInstance = null;
+
+function navigate(page, id=null) {
+  // destroy chart if switching away
+  if (chartInstance) { try { chartInstance.destroy(); } catch(e){} chartInstance = null; }
+
+  currentPage = page;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const navKey = page.startsWith('workout-') ? 'workouts' : page.startsWith('progress-') ? 'progress' : page;
+  const navEl = document.getElementById('nav-'+navKey);
+  if (navEl) navEl.classList.add('active');
+
+  if (page==='dashboard')       renderDashboard();
+  else if (page==='workouts')   renderWorkoutsList();
+  else if (page==='workout-new') renderWorkoutNew();
+  else if (page==='workout-detail') { currentWorkoutId=id; renderWorkoutDetail(id); }
+  else if (page==='progress')   renderProgress();
+  else if (page==='progress-ex') { currentExerciseId=id; renderExerciseProgress(id); }
+  else if (page==='exercises')  renderExercises();
+
+  document.getElementById('page').scrollTop = 0;
+}
+
+// ════════════════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════════════════
+function openModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('overlay').classList.remove('hidden');
+  // focus first input
+  setTimeout(()=>{
+    const inp = document.querySelector('#modal-content input, #modal-content select');
+    if(inp) inp.focus();
+  }, 100);
+}
+function closeModal() {
+  document.getElementById('overlay').classList.add('hidden');
+  document.getElementById('modal-content').innerHTML = '';
+}
+
+// ════════════════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════════════════
+function renderDashboard() {
+  const workouts = getWorkouts();
+  const today = todayStr();
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
+  const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate()-30);
+
+  const weekCount = workouts.filter(w=>new Date(w.date)>=weekAgo).length;
+  const monthCount = workouts.filter(w=>new Date(w.date)>=monthAgo).length;
+
+  // Personal records
+  const prs = {};
+  workouts.forEach(w=>(w.exercises||[]).forEach(we=>{
+    (we.sets||[]).forEach(s=>{
+      if(!s.weight) return;
+      if(!prs[we.exerciseId] || s.weight > prs[we.exerciseId].weight) {
+        prs[we.exerciseId] = { weight: s.weight, reps: s.reps, name: we.exerciseName, cat: we.exerciseCat };
+      }
+    });
+  }));
+  const prList = Object.values(prs).sort((a,b)=>b.weight-a.weight).slice(0,6);
+
+  // Recent workouts
+  const recent = [...workouts].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+
+  // Volume last 14 days
+  const volMap = {};
+  for(let i=13;i>=0;i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    volMap[d.toISOString().split('T')[0]] = 0;
+  }
+  workouts.forEach(w=>{
+    if(volMap[w.date]!==undefined) {
+      const vol = (w.exercises||[]).reduce((s,we)=>s+(we.sets||[]).reduce((ss,set)=>ss+set.reps*set.weight,0),0);
+      volMap[w.date] += vol;
+    }
+  });
+
+  document.getElementById('page').innerHTML = `
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">Tvoj fitness prehľad</div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🏋️</div>
+        <div class="stat-num">${workouts.length}</div>
+        <div class="stat-label">Tréningov celkom</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🔥</div>
+        <div class="stat-num">${weekCount}</div>
+        <div class="stat-label">Tento týždeň</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-num">${monthCount}</div>
+        <div class="stat-label">Tento mesiac</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-num">${prList.length}</div>
+        <div class="stat-label">Osobné rekordy</div>
+      </div>
+    </div>
+
+    <!-- Volume mini chart -->
+    ${Object.values(volMap).some(v=>v>0) ? `
+    <div class="section-label">Objem — posledných 14 dní</div>
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div class="chart-wrap"><canvas id="volChart"></canvas></div>
+    </div>` : ''}
+
+    <!-- Recent workouts -->
+    <div class="section-label">Posledné tréningy</div>
+    <div class="card" style="margin-bottom:16px">
+      ${recent.length===0 ? `<div class="empty"><div class="empty-icon">🏋️</div><div class="empty-title">Zatiaľ žiadne tréningy</div></div>` :
+        recent.map(w=>{
+          const vol = (w.exercises||[]).reduce((s,we)=>s+(we.sets||[]).reduce((ss,set)=>ss+set.reps*set.weight,0),0);
+          return `<div class="workout-item" onclick="navigate('workout-detail','${w.id}')">
+            <div class="workout-dot">💪</div>
+            <div style="flex:1;min-width:0">
+              <div class="workout-name">${w.name}</div>
+              <div class="workout-meta">${fmtDate(w.date)} · ${(w.exercises||[]).length} cvikov</div>
+            </div>
+            ${vol>0?`<div class="workout-vol"><div class="workout-vol-num">${fmtVol(vol)}</div><div class="workout-vol-label">objem</div></div>`:''}
+          </div>`;
+        }).join('')
+      }
+    </div>
+
+    <!-- PRs -->
+    ${prList.length>0?`
+    <div class="section-label">Osobné rekordy</div>
+    <div class="card" style="margin-bottom:16px">
+      ${prList.map(pr=>`
+        <div class="pr-row">
+          <div>
+            <span class="cat-chip ${catClass(pr.cat)}">${pr.cat}</span>
+            <div class="pr-exercise" style="margin-top:4px">${pr.name}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="pr-weight">${pr.weight} kg</div>
+            <span class="pr-badge">PR</span>
+          </div>
+        </div>`).join('')}
+    </div>`:''}
+
+    <button class="btn btn-primary btn-full" onclick="navigate('workout-new')" style="margin-bottom:8px">
+      <svg style="width:18px;height:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nový tréning
+    </button>
+  `;
+
+  // Draw volume chart
+  if(Object.values(volMap).some(v=>v>0)) {
+    setTimeout(()=>{
+      const ctx = document.getElementById('volChart');
+      if(!ctx) return;
+      chartInstance = new Chart(ctx, {
+        type:'line',
+        data:{
+          labels: Object.keys(volMap).map(fmtDateShort),
+          datasets:[{
+            data: Object.values(volMap),
+            borderColor:'#c8ff00', borderWidth:2.5,
+            backgroundColor:'rgba(200,255,0,0.08)',
+            fill:true, tension:0.4, pointRadius:3,
+            pointBackgroundColor:'#c8ff00',
+          }]
+        },
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${fmtVol(ctx.raw)} objem`}}},
+          scales:{
+            x:{ticks:{color:'#555',font:{size:10}},grid:{display:false},border:{display:false}},
+            y:{ticks:{color:'#555',font:{size:10}},grid:{color:'#1a1a1a'},border:{display:false}},
+          }
+        }
+      });
+    }, 50);
+  }
+}
+
+// ════════════════════════════════════════════════════
+// WORKOUTS LIST
+// ════════════════════════════════════════════════════
+function renderWorkoutsList() {
+  const workouts = [...getWorkouts()].sort((a,b)=>b.date.localeCompare(a.date));
+  const grouped = {};
+  workouts.forEach(w=>{
+    const key = w.date.slice(0,7);
+    (grouped[key]??=[]).push(w);
+  });
+
+  document.getElementById('page').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="page-title">Tréningy</div>
+      <button class="btn btn-primary" onclick="navigate('workout-new')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nový
+      </button>
+    </div>
+    <div class="page-sub">${workouts.length} tréningov</div>
+
+    ${workouts.length===0 ? `<div class="empty" style="padding-top:80px">
+      <div class="empty-icon">🏋️</div>
+      <div class="empty-title">Zatiaľ žiadne tréningy</div>
+      <div class="empty-sub">Vytvor prvý tréning a začni sledovať progres</div>
+    </div>` : Object.entries(grouped).map(([month, items])=>`
+      <div class="month-label">${monthLabel(month)}</div>
+      <div class="card" style="margin-bottom:12px">
+        ${items.map(w=>{
+          const vol = (w.exercises||[]).reduce((s,we)=>s+(we.sets||[]).reduce((ss,set)=>ss+set.reps*set.weight,0),0);
+          return `<div class="workout-item" onclick="navigate('workout-detail','${w.id}')">
+            <div class="workout-dot">💪</div>
+            <div style="flex:1;min-width:0">
+              <div class="workout-name">${w.name}</div>
+              <div class="workout-meta">${fmtDate(w.date)} · ${(w.exercises||[]).length} cvikov${w.durationMin?' · '+w.durationMin+' min':''}</div>
+            </div>
+            ${vol>0?`<div class="workout-vol"><div class="workout-vol-num">${fmtVol(vol)}</div><div class="workout-vol-label">objem</div></div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    `).join('')}
+  `;
+}
+
+// ════════════════════════════════════════════════════
+// NEW WORKOUT
+// ════════════════════════════════════════════════════
+function renderWorkoutNew() {
+  document.getElementById('page').innerHTML = `
+    <div class="top-row">
+      <button class="back-btn" onclick="navigate('workouts')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="page-title" style="margin-bottom:0">Nový tréning</div>
+    </div>
+
+    <div class="form-group"><label>Názov tréningu</label>
+      <input type="text" id="wName" placeholder="napr. Push Day, Nohový deň..." autocomplete="off"/>
+    </div>
+    <div class="form-group"><label>Dátum</label>
+      <input type="date" id="wDate" value="${todayStr()}"/>
+    </div>
+    <div class="form-group"><label>Dĺžka (min, voliteľné)</label>
+      <input type="number" id="wDur" placeholder="napr. 60" min="1"/>
+    </div>
+    <div class="form-group"><label>Poznámky (voliteľné)</label>
+      <textarea id="wNotes" rows="3" placeholder="Ako si sa cítil, čo si plánoval..."></textarea>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="createWorkout()">Vytvoriť tréning</button>
+  `;
+  setTimeout(()=>document.getElementById('wName').focus(),100);
+}
+
+function createWorkout() {
+  const name = document.getElementById('wName').value.trim();
+  if(!name) { showToast('Zadaj názov tréningu'); return; }
+  const w = {
+    id: uid(), name,
+    date: document.getElementById('wDate').value || todayStr(),
+    notes: document.getElementById('wNotes').value.trim() || null,
+    durationMin: parseInt(document.getElementById('wDur').value)||null,
+    exercises: [],
+    createdAt: new Date().toISOString()
+  };
+  const all = getWorkouts();
+  all.push(w);
+  saveWorkouts(all);
+  navigate('workout-detail', w.id);
+}
+
+// ════════════════════════════════════════════════════
+// WORKOUT DETAIL
+// ════════════════════════════════════════════════════
+function getWorkout(id) { return getWorkouts().find(w=>w.id===id); }
+function saveWorkout(w) {
+  const all = getWorkouts().map(x=>x.id===w.id?w:x);
+  saveWorkouts(all);
+}
+
+function renderWorkoutDetail(id) {
+  const w = getWorkout(id);
+  if(!w) { navigate('workouts'); return; }
+
+  const totalVol = (w.exercises||[]).reduce((s,we)=>s+(we.sets||[]).reduce((ss,set)=>ss+set.reps*set.weight,0),0);
+
+  // compute per-exercise max weight across all workouts for PR detection
+  const allWorkouts = getWorkouts();
+  const globalMax = {}; // exerciseId -> max weight before this workout
+  allWorkouts.forEach(ww=>{
+    if(ww.id===id) return; // skip current
+    (ww.exercises||[]).forEach(we=>{
+      const m = Math.max(0,...(we.sets||[]).map(s=>s.weight));
+      if(!globalMax[we.exerciseId]||m>globalMax[we.exerciseId]) globalMax[we.exerciseId]=m;
+    });
+  });
+
+  document.getElementById('page').innerHTML = `
+    <div class="top-row">
+      <button class="back-btn" onclick="navigate('workouts')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;line-height:1">${w.name}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">
+          ${fmtDate(w.date)}${w.exercises.length?' · '+w.exercises.length+' cvikov':''}${totalVol>0?' · '+fmtVol(totalVol)+' objem':''}
+        </div>
+      </div>
+      <button class="btn-icon" style="margin-left:auto" onclick="deleteWorkout('${id}')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      </button>
+    </div>
+
+    <div id="exercises-list">
+      ${(w.exercises||[]).length===0?`
+        <div class="empty">
+          <div class="empty-icon">🏋️</div>
+          <div class="empty-title">Žiadne cviky</div>
+          <div class="empty-sub">Pridaj cvik z databázy alebo vytvor vlastný</div>
+        </div>`:
+        (w.exercises||[]).map(we=>renderWeCard(we, id, globalMax)).join('')
+      }
+    </div>
+
+    <button class="btn btn-ghost btn-full" style="margin-top:8px;border-style:dashed" onclick="openExercisePicker('${id}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Pridať cvik
+    </button>
+
+    <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="openExercisePicker('${id}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Pridať cvik
+    </button>
+  `;
+  // Fix: only show one "Pridať cvik" button when exercises exist
+  if((w.exercises||[]).length>0) {
+    document.querySelectorAll('#page .btn.btn-ghost.btn-full').forEach(b=>b.remove());
+  } else {
+    document.querySelectorAll('#page .btn.btn-primary.btn-full').forEach(b=>b.remove());
+  }
+}
+
+function renderWeCard(we, workoutId, globalMax) {
+  const sets = we.sets||[];
+  const maxW = Math.max(0,...sets.map(s=>s.weight));
+  const vol = sets.reduce((s,set)=>s+set.reps*set.weight,0);
+  const prevMax = globalMax[we.exerciseId]||0;
+
+  return `<div class="we-card" id="we-${we.id}">
+    <div class="we-header">
+      <div>
+        <span class="cat-chip ${catClass(we.exerciseCat)}">${we.exerciseCat}</span>
+        <div class="we-title" style="margin-top:5px">${we.exerciseName}</div>
+        ${sets.length>0?`<div class="we-meta">${sets.length} sér · max ${fmtW(maxW)} · ${Math.round(vol).toLocaleString()} kg</div>`:''}
+      </div>
+      <button class="btn-icon" onclick="removeExercise('${workoutId}','${we.id}')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>
+    </div>
+    <div class="we-body">
+      ${sets.length>0?`
+        <div style="display:grid;grid-template-columns:28px 1fr 1fr 1fr 36px;gap:8px;padding:0 2px 8px;margin-bottom:4px">
+          <span style="font-size:11px;color:var(--text3);text-align:center">#</span>
+          <span style="font-size:11px;color:var(--text3);text-align:center">Váha</span>
+          <span style="font-size:11px;color:var(--text3);text-align:center">Opak.</span>
+          <span style="font-size:11px;color:var(--text3);text-align:center">1RM</span>
+          <span></span>
+        </div>
+        ${sets.map((s,i)=>{
+          const orm = calc1RM(s.weight,s.reps);
+          const isPR = s.weight>0 && s.weight>prevMax && s.weight===maxW;
+          return `<div class="set-row">
+            <div class="set-num">${i+1}</div>
+            <div class="set-val" style="display:flex;align-items:center;gap:4px;justify-content:center">
+              <span>${s.weight}</span><span style="font-size:10px;color:var(--text3)">kg</span>
+              ${isPR?'<span class="pr-badge">PR</span>':''}
+            </div>
+            <div class="set-val">${s.reps}<span style="font-size:10px;color:var(--text3)"> ×</span></div>
+            <div class="set-1rm">${orm} kg</div>
+            <button class="btn-icon" style="width:30px;height:30px" onclick="deleteSet('${workoutId}','${we.id}','${s.id}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>`;
+        }).join('')}
+      `:''}
+      <button class="btn btn-ghost btn-full" style="margin-top:6px;border-style:dashed;font-size:13px;padding:10px"
+        onclick="openAddSet('${workoutId}','${we.id}')">
+        + Pridať sériu
+      </button>
+    </div>
+  </div>`;
+}
+
+function deleteWorkout(id) {
+  if(!confirm('Vymazať tento tréning?')) return;
+  saveWorkouts(getWorkouts().filter(w=>w.id!==id));
+  navigate('workouts');
+}
+
+function removeExercise(workoutId, weId) {
+  const w = getWorkout(workoutId);
+  w.exercises = w.exercises.filter(e=>e.id!==weId);
+  saveWorkout(w);
+  renderWorkoutDetail(workoutId);
+}
+
+function deleteSet(workoutId, weId, setId) {
+  const w = getWorkout(workoutId);
+  const we = w.exercises.find(e=>e.id===weId);
+  if(we) we.sets = we.sets.filter(s=>s.id!==setId);
+  saveWorkout(w);
+  renderWorkoutDetail(workoutId);
+}
+
+// ── Exercise Picker ──────────────────────────────
+function openExercisePicker(workoutId) {
+  const exercises = getExercises();
+  const cats = [...new Set(exercises.map(e=>e.cat))].sort();
+
+  openModal(`
+    <div class="modal-title">Vybrať cvik</div>
+    <div class="search-wrap">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="exSearch" placeholder="Hľadať cvik..." oninput="filterExercises('${workoutId}',this.value,'')"/>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="catFilters">
+      <button class="chart-tab active" onclick="setCatFilter('${workoutId}','',this)">Všetky</button>
+      ${cats.map(c=>`<button class="chart-tab" onclick="setCatFilter('${workoutId}','${c}',this)">${c}</button>`).join('')}
+    </div>
+    <div id="exList" style="max-height:45vh;overflow-y:auto;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)">
+      ${renderExPickList(exercises, workoutId)}
+    </div>
+    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="openCustomExercise('${workoutId}')">
+      + Vytvoriť vlastný cvik
+    </button>
+  `);
+}
+
+let currentCatFilter = '';
+function setCatFilter(workoutId, cat, btn) {
+  currentCatFilter = cat;
+  document.querySelectorAll('#catFilters .chart-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  filterExercises(workoutId, document.getElementById('exSearch')?.value||'', cat);
+}
+
+function filterExercises(workoutId, search, cat) {
+  const exercises = getExercises();
+  const filtered = exercises.filter(e=>
+    (!search || e.name.toLowerCase().includes(search.toLowerCase())) &&
+    (!cat || e.cat===cat)
+  );
+  document.getElementById('exList').innerHTML = renderExPickList(filtered, workoutId);
+}
+
+function renderExPickList(exercises, workoutId) {
+  if(!exercises.length) return `<div style="padding:20px;text-align:center;color:var(--text3)">Žiadne cviky nenájdené</div>`;
+  return exercises.map(e=>`
+    <div class="ex-pick-item" onclick="openExerciseSetup('${workoutId}','${e.id}')">
+      <div>
+        <div class="ex-name">${e.name}</div>
+        ${e.muscle?`<div class="ex-muscle">${e.muscle}</div>`:''}
+      </div>
+      <span class="cat-chip ${catClass(e.cat)}">${e.cat}</span>
+    </div>`).join('');
+}
+
+// Globálny stav pre setup modal
+let _setupSets = [];
+
+// Medzikrok — nastav každú sériu zvlášť
+function openExerciseSetup(workoutId, exerciseId) {
+  const ex = getExercises().find(e=>e.id===exerciseId);
+  if(!ex) return;
+
+  // Načítaj posledné hodnoty z histórie
+  const allWorkouts = getWorkouts();
+  let lastSets = [];
+  for(let i=allWorkouts.length-1;i>=0;i--) {
+    const we = (allWorkouts[i].exercises||[]).find(e=>e.exerciseId===exerciseId);
+    if(we && we.sets?.length) { lastSets = we.sets; break; }
+  }
+
+  // Predvyplň série — z histórie alebo default 3×8×0
+  const defaultCount = lastSets.length || 3;
+  _setupSets = Array.from({length: defaultCount}, (_,i) => ({
+    weight: lastSets[i]?.weight ?? (lastSets[0]?.weight ?? 0),
+    reps:   lastSets[i]?.reps   ?? (lastSets[0]?.reps   ?? 8),
+  }));
+
+  renderSetupModal(workoutId, exerciseId, ex, lastSets);
+}
+
+function renderSetupModal(workoutId, exerciseId, ex, lastSets) {
+  const historyHtml = lastSets.length ? `
+    <div style="background:rgba(200,255,0,0.06);border:1px solid rgba(200,255,0,0.15);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--text2)">
+      ⏱ Naposledy: ${lastSets.map((s,i)=>`<strong style="color:var(--text)">S${i+1}: ${s.weight} kg × ${s.reps}</strong>`).join(' · ')}
+    </div>` : '';
+
+  const setsHtml = _setupSets.map((s,i) => `
+    <div style="background:var(--bg3);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px" id="setup-set-${i}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px">Séria ${i+1}</span>
+        ${_setupSets.length>1 ? `<button onclick="removeSetupSet(${i},'${workoutId}','${exerciseId}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;line-height:1;padding:0 4px">×</button>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Váha (kg)</div>
+          <div class="num-input-wrap">
+            <div class="num-btn" style="width:34px;height:34px" onclick="adjustSetupSet(${i},'weight',-2.5)">−</div>
+            <input class="num-input-field" style="font-size:16px;height:34px" type="number"
+              id="ss-w-${i}" value="${s.weight}" min="0" step="0.5"
+              oninput="_setupSets[${i}].weight=parseFloat(this.value)||0; updateSetupOrm(${i})"/>
+            <div class="num-btn" style="width:34px;height:34px" onclick="adjustSetupSet(${i},'weight',2.5)">+</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px">Opakovania</div>
+          <div class="num-input-wrap">
+            <div class="num-btn" style="width:34px;height:34px" onclick="adjustSetupSet(${i},'reps',-1)">−</div>
+            <input class="num-input-field" style="font-size:16px;height:34px" type="number"
+              id="ss-r-${i}" value="${s.reps}" min="1" step="1"
+              oninput="_setupSets[${i}].reps=parseInt(this.value)||1; updateSetupOrm(${i})"/>
+            <div class="num-btn" style="width:34px;height:34px" onclick="adjustSetupSet(${i},'reps',1)">+</div>
+          </div>
+        </div>
+      </div>
+      ${s.weight>0 ? `<div style="margin-top:8px;font-size:12px;color:var(--text3)">⚡ 1RM ≈ <span id="ss-orm-${i}" style="color:var(--accent);font-weight:700">${calc1RM(s.weight,s.reps)} kg</span></div>` : `<div style="margin-top:8px;font-size:12px;color:var(--text3);min-height:18px" id="ss-orm-wrap-${i}"></div>`}
+    </div>
+  `).join('');
+
+  openModal(`
+    <div class="modal-title">${ex.name}</div>
+    <div style="margin-top:-10px;margin-bottom:14px">
+      <span class="cat-chip ${catClass(ex.cat)}">${ex.cat}</span>
+      ${ex.muscle?`<span style="font-size:12px;color:var(--text3);margin-left:8px">${ex.muscle}</span>`:''}
+    </div>
+    ${historyHtml}
+    <div id="setup-sets-list">${setsHtml}</div>
+    <button class="btn btn-ghost btn-full" style="margin-bottom:14px;border-style:dashed;font-size:13px;padding:10px"
+      onclick="addSetupSet('${workoutId}','${exerciseId}')">
+      + Pridať sériu
+    </button>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="openExercisePicker('${workoutId}')">Späť</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="addExerciseWithSets('${workoutId}','${exerciseId}')">
+        Pridať cvik
+      </button>
+    </div>
+  `);
+}
+
+function adjustSetupSet(idx, field, step) {
+  const s = _setupSets[idx];
+  if(field==='weight') s.weight = Math.max(0, +(s.weight+step).toFixed(2));
+  if(field==='reps')   s.reps   = Math.max(1, s.reps+step);
+  const el = document.getElementById(field==='weight'?`ss-w-${idx}`:`ss-r-${idx}`);
+  if(el) el.value = field==='weight' ? s.weight : s.reps;
+  updateSetupOrm(idx);
+}
+
+function updateSetupOrm(idx) {
+  const s = _setupSets[idx];
+  // update input values in case called from oninput
+  const wEl = document.getElementById(`ss-w-${idx}`);
+  const rEl = document.getElementById(`ss-r-${idx}`);
+  if(wEl) s.weight = parseFloat(wEl.value)||0;
+  if(rEl) s.reps   = parseInt(rEl.value)||1;
+
+  const ormEl = document.getElementById(`ss-orm-${idx}`);
+  const wrapEl = document.getElementById(`ss-orm-wrap-${idx}`);
+  if(s.weight>0) {
+    const val = calc1RM(s.weight, s.reps)+' kg';
+    if(ormEl) { ormEl.textContent = val; }
+    else if(wrapEl) { wrapEl.innerHTML = `⚡ 1RM ≈ <span id="ss-orm-${idx}" style="color:var(--accent);font-weight:700">${val}</span>`; }
+  } else {
+    if(ormEl) ormEl.closest('div').innerHTML = `<div style="min-height:18px" id="ss-orm-wrap-${idx}"></div>`;
+  }
+}
+
+function addSetupSet(workoutId, exerciseId) {
+  const ex = getExercises().find(e=>e.id===exerciseId);
+  const last = _setupSets[_setupSets.length-1] || {weight:0, reps:8};
+  _setupSets.push({weight: last.weight, reps: last.reps});
+  const lastSets = [];
+  renderSetupModal(workoutId, exerciseId, ex, lastSets);
+}
+
+function removeSetupSet(idx, workoutId, exerciseId) {
+  const ex = getExercises().find(e=>e.id===exerciseId);
+  _setupSets.splice(idx, 1);
+  renderSetupModal(workoutId, exerciseId, ex, []);
+}
+
+function addExerciseWithSets(workoutId, exerciseId) {
+  const ex = getExercises().find(e=>e.id===exerciseId);
+  if(!ex) return;
+
+  // Načítaj aktuálne hodnoty z inputov (pre prípad že user písal priamo)
+  _setupSets.forEach((s,i)=>{
+    const wEl = document.getElementById(`ss-w-${i}`);
+    const rEl = document.getElementById(`ss-r-${i}`);
+    if(wEl) s.weight = parseFloat(wEl.value)||0;
+    if(rEl) s.reps   = parseInt(rEl.value)||1;
+  });
+
+  const generatedSets = _setupSets.map((s,i)=>({
+    id: uid(), setNumber: i+1, weight: s.weight, reps: s.reps, notes: ''
+  }));
+
+  const w = getWorkout(workoutId);
+  w.exercises.push({ id:uid(), exerciseId:ex.id, exerciseName:ex.name, exerciseCat:ex.cat, sets:generatedSets });
+  saveWorkout(w);
+  _setupSets = [];
+  closeModal();
+  renderWorkoutDetail(workoutId);
+  showToast(`${ex.name} pridaný — ${generatedSets.length} sérií ✓`);
+}
+
+function addExercise(workoutId, exerciseId) {
+  const ex = getExercises().find(e=>e.id===exerciseId);
+  if(!ex) return;
+  const w = getWorkout(workoutId);
+  w.exercises.push({ id:uid(), exerciseId:ex.id, exerciseName:ex.name, exerciseCat:ex.cat, sets:[] });
+  saveWorkout(w);
+  closeModal();
+  renderWorkoutDetail(workoutId);
+}
+
+function openCustomExercise(workoutId) {
+  openModal(`
+    <div class="modal-title">Vlastný cvik</div>
+    <div class="form-group"><label>Názov cviku</label>
+      <input type="text" id="ceName" placeholder="napr. Landmine press" autocomplete="off"/>
+    </div>
+    <div class="form-group"><label>Kategória</label>
+      <select id="ceCat">
+        ${['Prsia','Chrbát','Nohy','Ramená','Bicepsy','Tricepsy','Brucho','Vlastné'].map(c=>`<option value="${c}">${c}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label>Svalová skupina (voliteľné)</label>
+      <input type="text" id="ceMuscle" placeholder="napr. Deltoids"/>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="openExercisePicker('${workoutId}')">Späť</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="createCustomEx('${workoutId}')">Vytvoriť</button>
+    </div>
+  `);
+}
+
+function createCustomEx(workoutId) {
+  const name = document.getElementById('ceName').value.trim();
+  if(!name) { showToast('Zadaj názov cviku'); return; }
+  const all = getExercises();
+  if(all.find(e=>e.name.toLowerCase()===name.toLowerCase())) { showToast('Cvik s týmto názvom už existuje'); return; }
+  const ex = { id:'c'+uid(), name, cat:document.getElementById('ceCat').value, muscle:document.getElementById('ceMuscle').value.trim()||null };
+  const custom = getCustomExercises();
+  custom.push(ex);
+  DB.set('custom_exercises', custom);
+  showToast('Cvik uložený do knižnice ✓');
+  // Prejdi cez setup modal ako ostatné cviky
+  openExerciseSetup(workoutId, ex.id);
+}
+
+// ── Add Set Modal ────────────────────────────────
+function openAddSet(workoutId, weId) {
+  const w = getWorkout(workoutId);
+  const we = w.exercises.find(e=>e.id===weId);
+  const last = (we.sets||[]).slice(-1)[0];
+  const initWeight = last?.weight ?? 0;
+  const initReps = last?.reps ?? 8;
+
+  openModal(`
+    <div class="modal-title">Pridať sériu</div>
+    <div style="font-size:14px;color:var(--text2);margin-bottom:16px;margin-top:-8px">${we.exerciseName}</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px">
+      <div class="form-group" style="margin-bottom:0">
+        <label>Váha (kg)</label>
+        <div class="num-input-wrap">
+          <div class="num-btn" onclick="adjustNum('setWeight',-2.5)">−</div>
+          <input class="num-input-field" type="number" id="setWeight" value="${initWeight}" min="0" step="0.5"/>
+          <div class="num-btn" onclick="adjustNum('setWeight',2.5)">+</div>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>Opakovania</label>
+        <div class="num-input-wrap">
+          <div class="num-btn" onclick="adjustNum('setReps',-1)">−</div>
+          <input class="num-input-field" type="number" id="setReps" value="${initReps}" min="1" step="1"/>
+          <div class="num-btn" onclick="adjustNum('setReps',1)">+</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="orm-box" id="ormBox">
+      <span class="orm-label">⚡ Odh. 1RM</span>
+      <span class="orm-val" id="ormVal">${calc1RM(initWeight,initReps)} kg</span>
+    </div>
+
+    <div class="form-group"><label>Poznámka (voliteľné)</label>
+      <input type="text" id="setNote" placeholder="napr. cítil som sa silný..."/>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="saveSet('${workoutId}','${weId}')">
+      Uložiť sériu
+    </button>
+  `);
+
+  // Live 1RM update
+  ['setWeight','setReps'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', update1RM);
+  });
+}
+
+function update1RM() {
+  const w = parseFloat(document.getElementById('setWeight').value)||0;
+  const r = parseInt(document.getElementById('setReps').value)||1;
+  const el = document.getElementById('ormVal');
+  if(el) el.textContent = calc1RM(w,r)+' kg';
+  const box = document.getElementById('ormBox');
+  if(box) box.style.display = w>0 ? 'flex' : 'none';
+}
+
+function adjustNum(id, step) {
+  const el = document.getElementById(id);
+  const cur = parseFloat(el.value)||0;
+  el.value = Math.max(0, +(cur+step).toFixed(2));
+  update1RM();
+}
+
+function saveSet(workoutId, weId) {
+  const weight = parseFloat(document.getElementById('setWeight').value)||0;
+  const reps = parseInt(document.getElementById('setReps').value)||0;
+  const notes = document.getElementById('setNote')?.value||'';
+  if(reps<=0) { showToast('Zadaj počet opakovaní'); return; }
+
+  const w = getWorkout(workoutId);
+  const we = w.exercises.find(e=>e.id===weId);
+  const setNum = (we.sets||[]).length+1;
+  we.sets.push({ id:uid(), setNumber:setNum, weight, reps, notes });
+  saveWorkout(w);
+  closeModal();
+  renderWorkoutDetail(workoutId);
+  showToast(`Séria ${setNum} uložená ✓`);
+}
+
+// ════════════════════════════════════════════════════
+// PROGRESS
+// ════════════════════════════════════════════════════
+function renderProgress() {
+  const workouts = getWorkouts();
+  // Build exercise stats
+  const exStats = {};
+  workouts.forEach(w=>{
+    (w.exercises||[]).forEach(we=>{
+      if(!we.sets?.length) return;
+      if(!exStats[we.exerciseId]) exStats[we.exerciseId]={name:we.exerciseName,cat:we.exerciseCat,id:we.exerciseId,count:0};
+      exStats[we.exerciseId].count++;
+    });
+  });
+  const sorted = Object.values(exStats).sort((a,b)=>b.count-a.count);
+
+  document.getElementById('page').innerHTML = `
+    <div class="page-title">Progres</div>
+    <div class="page-sub">Vyber cvik a sleduj vývoj výkonu</div>
+
+    <div class="search-wrap" style="margin-bottom:12px">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Hľadať cvik..." oninput="filterProgressList(this.value)" id="progSearch"/>
+    </div>
+
+    <div id="progList">
+      ${sorted.length===0 ? `<div class="empty"><div class="empty-icon">📈</div><div class="empty-title">Zatiaľ žiadne dáta</div><div class="empty-sub">Zaznamenej tréningy a sleduj progres</div></div>` :
+        `<div class="card">${sorted.map(ex=>`
+          <div class="ex-pick-item" onclick="navigate('progress-ex','${ex.id}')">
+            <div>
+              <div class="ex-name">${ex.name}</div>
+              <div class="ex-muscle">${ex.count}× trénovaný</div>
+            </div>
+            <span class="cat-chip ${catClass(ex.cat)}">${ex.cat}</span>
+          </div>`).join('')}
+        </div>`
+      }
+    </div>
+  `;
+}
+
+function filterProgressList(search) {
+  const workouts = getWorkouts();
+  const exStats = {};
+  workouts.forEach(w=>(w.exercises||[]).forEach(we=>{
+    if(!we.sets?.length) return;
+    if(!exStats[we.exerciseId]) exStats[we.exerciseId]={name:we.exerciseName,cat:we.exerciseCat,id:we.exerciseId,count:0};
+    exStats[we.exerciseId].count++;
+  }));
+  const sorted = Object.values(exStats)
+    .filter(e=>!search||e.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a,b)=>b.count-a.count);
+  document.getElementById('progList').innerHTML = sorted.length===0
+    ? `<div class="empty"><div class="empty-title">Žiadne výsledky</div></div>`
+    : `<div class="card">${sorted.map(ex=>`
+        <div class="ex-pick-item" onclick="navigate('progress-ex','${ex.id}')">
+          <div><div class="ex-name">${ex.name}</div><div class="ex-muscle">${ex.count}× trénovaný</div></div>
+          <span class="cat-chip ${catClass(ex.cat)}">${ex.cat}</span>
+        </div>`).join('')}</div>`;
+}
+
+function renderExerciseProgress(exerciseId) {
+  const workouts = getWorkouts();
+  // Gather all sessions for this exercise
+  const sessions = [];
+  workouts.forEach(w=>{
+    (w.exercises||[]).forEach(we=>{
+      if(we.exerciseId!==exerciseId||!we.sets?.length) return;
+      const maxW = Math.max(...we.sets.map(s=>s.weight));
+      const vol = we.sets.reduce((s,set)=>s+set.reps*set.weight,0);
+      const maxR = Math.max(...we.sets.map(s=>s.reps));
+      const orm = Math.max(...we.sets.map(s=>calc1RM(s.weight,s.reps)));
+      sessions.push({ date:w.date, wName:w.name, maxW, vol, maxR, orm, sets:we.sets });
+    });
+  });
+  sessions.sort((a,b)=>a.date.localeCompare(b.date));
+
+  const exName = sessions[0] ? (getExercises().find(e=>e.id===exerciseId)||{name:'Cvik'}).name : 'Cvik';
+  const exCat = sessions[0] ? (getExercises().find(e=>e.id===exerciseId)||{cat:'Ostatné'}).cat : 'Ostatné';
+  const pr = sessions.reduce((best,s)=>s.maxW>best.maxW?s:best, {maxW:0});
+
+  document.getElementById('page').innerHTML = `
+    <div class="top-row">
+      <button class="back-btn" onclick="navigate('progress')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div>
+        <span class="cat-chip ${catClass(exCat)}">${exCat}</span>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;margin-top:4px;line-height:1">${exName}</div>
+      </div>
+    </div>
+
+    ${pr.maxW>0?`
+    <div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div>
+        <div style="font-size:12px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.8px">Osobný rekord</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:900;color:var(--accent);line-height:1">${pr.maxW} kg</div>
+        <div style="font-size:12px;color:var(--text3)">1RM ≈ ${calc1RM(pr.maxW, pr.sets?.find(s=>s.weight===pr.maxW)?.reps||1)} kg · ${fmtDate(pr.date)}</div>
+      </div>
+      <span class="pr-badge" style="font-size:12px;padding:6px 12px">PR</span>
+    </div>`:''}
+
+    ${sessions.length>=2?`
+    <div class="chart-tabs" id="chartTabs">
+      <button class="chart-tab active" onclick="switchChart('weight',this)">Max váha</button>
+      <button class="chart-tab" onclick="switchChart('volume',this)">Objem</button>
+      <button class="chart-tab" onclick="switchChart('reps',this)">Opakovania</button>
+      <button class="chart-tab" onclick="switchChart('1rm',this)">Odh. 1RM</button>
+    </div>
+    <div class="card card-pad" style="margin-bottom:16px">
+      <div class="chart-wrap"><canvas id="exChart"></canvas></div>
+    </div>`:''}
+
+    <!-- History table -->
+    <div class="section-label">História tréningov (${sessions.length})</div>
+    ${sessions.length===0?`<div class="empty"><div class="empty-title">Žiadne dáta</div></div>`:
+    `<div class="card">
+      ${[...sessions].reverse().slice(0,15).map(s=>`
+        <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-weight:600;font-size:13px">${s.wName}</div>
+            <div style="font-size:11px;color:var(--text3)">${fmtDate(s.date)} · ${s.sets.length} sérií</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px">${fmtW(s.maxW)}</div>
+            <div style="font-size:10px;color:var(--text3)">max</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px">${Math.round(s.vol).toLocaleString()} kg</div>
+            <div style="font-size:10px;color:var(--text3)">objem</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:#ff44b4">${s.orm} kg</div>
+            <div style="font-size:10px;color:var(--text3)">1RM</div>
+          </div>
+        </div>`).join('')}
+    </div>`}
+  `;
+
+  if(sessions.length>=2) {
+    window._progSessions = sessions;
+    setTimeout(()=>drawExChart('weight'), 50);
+  }
+}
+
+function switchChart(type, btn) {
+  document.querySelectorAll('#chartTabs .chart-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawExChart(type);
+}
+
+function drawExChart(type) {
+  const sessions = window._progSessions||[];
+  if(chartInstance) { try{chartInstance.destroy();}catch(e){} chartInstance=null; }
+  const ctx = document.getElementById('exChart');
+  if(!ctx) return;
+
+  const configs = {
+    weight:  { data:sessions.map(s=>s.maxW),  color:'#c8ff00', label:'Max váha (kg)' },
+    volume:  { data:sessions.map(s=>Math.round(s.vol)), color:'#4488ff', label:'Objem (kg)' },
+    reps:    { data:sessions.map(s=>s.maxR),   color:'#00d4a0', label:'Max opakovania' },
+    '1rm':   { data:sessions.map(s=>s.orm),    color:'#ff44b4', label:'Odh. 1RM (kg)' },
+  };
+  const cfg = configs[type];
+
+  chartInstance = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: sessions.map(s=>fmtDateShort(s.date)),
+      datasets:[{
+        data:cfg.data, borderColor:cfg.color, borderWidth:2.5,
+        backgroundColor:`${cfg.color}15`, fill:true, tension:0.4,
+        pointRadius:4, pointBackgroundColor:cfg.color,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} kg`}}},
+      scales:{
+        x:{ticks:{color:'#555',font:{size:10}},grid:{display:false},border:{display:false}},
+        y:{ticks:{color:'#555',font:{size:10}},grid:{color:'#1a1a1a'},border:{display:false}},
+      }
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════
+// EXERCISES LIBRARY
+// ════════════════════════════════════════════════════
+function renderExercises() {
+  const exercises = getExercises();
+  const grouped = {};
+  exercises.forEach(e=>{ (grouped[e.cat]??=[]).push(e); });
+
+  document.getElementById('page').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="page-title">Knižnica</div>
+      <button class="btn btn-primary" onclick="openNewExerciseModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nový
+      </button>
+    </div>
+    <div class="page-sub">${exercises.length} cvikov</div>
+
+    <div class="search-wrap" style="margin-bottom:12px">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Hľadať cvik..." oninput="filterExLib(this.value)"/>
+    </div>
+
+    <div id="exLibList">
+      ${renderExLibGroups(grouped)}
+    </div>
+  `;
+}
+
+function renderExLibGroups(grouped) {
+  return Object.entries(grouped).map(([cat,exs])=>`
+    <div class="section-label">${cat} (${exs.length})</div>
+    <div class="card" style="margin-bottom:12px">
+      ${exs.map(e=>`
+        <div class="ex-pick-item">
+          <div>
+            <div class="ex-name">${e.name}${!DEFAULT_EXERCISES.find(d=>d.id===e.id)?` <span style="font-size:10px;background:rgba(200,255,0,.1);color:var(--accent);padding:2px 6px;border-radius:4px;font-weight:700">vlastný</span>`:''}</div>
+            ${e.muscle?`<div class="ex-muscle">${e.muscle}</div>`:''}
+          </div>
+          ${!DEFAULT_EXERCISES.find(d=>d.id===e.id)?`
+          <button class="btn-icon" onclick="deleteExercise('${e.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>`:'<span class="cat-chip '+catClass(cat)+'">'+cat+'</span>'}
+        </div>`).join('')}
+    </div>
+  `).join('');
+}
+
+function filterExLib(search) {
+  const exercises = getExercises().filter(e=>!search||e.name.toLowerCase().includes(search.toLowerCase()));
+  const grouped = {};
+  exercises.forEach(e=>{ (grouped[e.cat]??=[]).push(e); });
+  document.getElementById('exLibList').innerHTML = renderExLibGroups(grouped);
+}
+
+function openNewExerciseModal() {
+  openModal(`
+    <div class="modal-title">Nový vlastný cvik</div>
+    <div class="form-group"><label>Názov cviku</label>
+      <input type="text" id="neName" placeholder="napr. Landmine press" autocomplete="off"/>
+    </div>
+    <div class="form-group"><label>Kategória</label>
+      <select id="neCat">
+        ${['Prsia','Chrbát','Nohy','Ramená','Bicepsy','Tricepsy','Brucho','Vlastné'].map(c=>`<option value="${c}">${c}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group"><label>Svalová skupina (voliteľné)</label>
+      <input type="text" id="neMuscle" placeholder="napr. Deltoids"/>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="saveNewExercise()">Vytvoriť cvik</button>
+  `);
+}
+
+function saveNewExercise() {
+  const name = document.getElementById('neName').value.trim();
+  if(!name) { showToast('Zadaj názov cviku'); return; }
+  const all = getExercises();
+  if(all.find(e=>e.name.toLowerCase()===name.toLowerCase())) { showToast('Cvik s týmto názvom už existuje'); return; }
+  const ex = { id:'c'+uid(), name, cat:document.getElementById('neCat').value, muscle:document.getElementById('neMuscle').value.trim()||null };
+  const custom = getCustomExercises();
+  custom.push(ex);
+  DB.set('custom_exercises', custom);
+  closeModal();
+  renderExercises();
+  showToast('Cvik vytvorený ✓');
+}
+
+function deleteExercise(id) {
+  if(!confirm('Vymazať vlastný cvik?')) return;
+  const custom = getCustomExercises().filter(e=>e.id!==id);
+  DB.set('custom_exercises', custom);
+  renderExercises();
+}
+
+// ════════════════════════════════════════════════════
+// EXPORT CSV
+// ════════════════════════════════════════════════════
+function exportCSV() {
+  const workouts = getWorkouts();
+  const rows = [['Dátum','Tréning','Cvik','Kategória','Séria','Opakovania','Váha (kg)','Odh. 1RM','Poznámka']];
+  workouts.sort((a,b)=>b.date.localeCompare(a.date)).forEach(w=>{
+    (w.exercises||[]).forEach(we=>{
+      (we.sets||[]).forEach(s=>{
+        rows.push([w.date,w.name,we.exerciseName,we.exerciseCat,s.setNumber,s.reps,s.weight,calc1RM(s.weight,s.reps),s.notes||'']);
+      });
+    });
+  });
+  const csv = '\uFEFF'+rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='treningy.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Export hotový ✓');
+}
+
+// ════════════════════════════════════════════════════
+// PWA SERVICE WORKER
+// ════════════════════════════════════════════════════
+if('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE='fittracker-v1';
+    self.addEventListener('install',e=>e.waitUntil(
+      caches.open(CACHE).then(c=>c.addAll([self.location.pathname]))
+    ));
+    self.addEventListener('fetch',e=>e.respondWith(
+      caches.match(e.request).then(r=>r||fetch(e.request))
+    ));
+  `;
+  const blob = new Blob([swCode],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+}
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+navigate('dashboard');
+</script>
+</body>
+</html>
